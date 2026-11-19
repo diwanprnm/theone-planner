@@ -1,7 +1,7 @@
 # TheOnePlanner — api (NestJS) + web (nginx).
 #
 # Topologi: nginx di host (yang sudah punya domain + SSL) meneruskan
-# domain → 127.0.0.1:8080. Container web hanya mendengarkan di loopback
+# domain → 127.0.0.1:3006. Container web hanya mendengarkan di loopback
 # supaya tidak bisa diakses langsung lewat IP VPS.
 #
 # Migrasi database dijalankan manual, bukan saat `up`:
@@ -30,7 +30,7 @@ services:
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     restart: unless-stopped
     ports:
-      - '127.0.0.1:8080:80'
+      - '127.0.0.1:3006:80'
     depends_on:
       - api
 

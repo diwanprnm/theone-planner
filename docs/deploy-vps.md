@@ -1,6 +1,6 @@
 # Deploy ke VPS
 
-Topologi: nginx di host (sudah ada domain + SSL) → `127.0.0.1:8080` → container
+Topologi: nginx di host (sudah ada domain + SSL) → `127.0.0.1:3006` → container
 `web` (nginx) → `/api` diteruskan ke container `api:3000`. Hanya port 443 yang
 terbuka ke internet.
 
@@ -55,7 +55,7 @@ docker compose up -d
 Cek dari dalam VPS:
 
 ```bash
-curl -s localhost:8080/api/health
+curl -s localhost:3006/api/health
 # {"status":"ok","timestamp":"..."}
 ```
 
@@ -75,7 +75,7 @@ server {
     client_max_body_size 6m;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:3006;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
