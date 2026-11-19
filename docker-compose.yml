@@ -1,0 +1,44 @@
+# TheOnePlanner — api (NestJS) + web (nginx).
+#
+# Topologi: nginx di host (yang sudah punya domain + SSL) meneruskan
+# domain → 127.0.0.1:8080. Container web hanya mendengarkan di loopback
+# supaya tidak bisa diakses langsung lewat IP VPS.
+#
+# Migrasi database dijalankan manual, bukan saat `up`:
+#   docker compose run --rm migrate
+
+services:
+  api:
+    build: ./api
+    restart: unless-stopped
+    env_file: ./api/.env
+    # api/.env berisi nilai pengembangan; timpa yang beda di produksi.
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    expose:
+      - '3000'
+
+  web:
+    build:
+      context: ./web
+      args:
+        # Same-origin: browser memanggil /api, nginx meneruskannya ke api:3000.
+        VITE_API_BASE_URL: /api
+        # Nilai dibaca dari .env di root (dipakai saat build, bukan runtime).
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8080:80'
+    depends_on:
+      - api
+
+  # Stage `build` dipakai karena CLI `prisma` tidak ada di image runtime.
+  migrate:
+    build:
+      context: ./api
+      target: build
+    env_file: ./api/.env
+    command: npx prisma migrate deploy
+    profiles: ['tools']
