@@ -1,0 +1,27 @@
+# Dependensi
+node_modules/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment — jangan pernah di-commit
+.env
+.env.local
+.env.*.local
+
+# Log
+*.log
+npm-debug.log*
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

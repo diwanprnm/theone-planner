@@ -1,0 +1,263 @@
+// TheOnePlanner — skema data.
+//
+// Istilah di sini mengikuti CONTEXT.md persis. Jangan pakai sinonim:
+//   Event          = Acara
+//   Activity       = Kegiatan
+//   BudgetItem     = Item Anggaran
+//   Expense        = Pengeluaran
+//   Participant    = Peserta
+//   ExpenseShare   = Bagian
+//   Payer          = Pembayar (sebuah Participant)
+//   fundsRaised    = Uang Terkumpul (SATU angka per Event, bukan per Peserta)
+//   Category       = Kategori
+//
+// Yang sengaja TIDAK ada di model ini (lihat CONTEXT.md → "Larangan"):
+//   - talangan bersih antar orang (utang bersih) — tidak dihitung
+//   - pelacakan iuran per Peserta — Uang Terkumpul selalu satu angka per Event
+//   - multi mata uang — hanya Rupiah
+//   - kolaborasi antar Pengguna pada satu Event
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enum
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Siklus hidup Event: Draft → Berjalan → Selesai.
+enum EventStatus {
+  DRAFT
+  BERJALAN
+  SELESAI
+
+  @@map("event_status")
+}
+
+/// Metode Pembayaran — daftar tetap, tidak bisa ditambah Pengguna.
+enum PaymentMethod {
+  TUNAI
+  TRANSFER_BANK
+  QRIS_EWALLET
+  KARTU
+
+  @@map("payment_method")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pengguna
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Pengguna aplikasi. `id` sama persis dengan `auth.users.id` milik Supabase Auth,
+/// sehingga tidak perlu tabel pemetaan terpisah.
+model User {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  events     Event[]
+  categories Category[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Acara
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Acara utuh, dimiliki tepat satu Pengguna.
+model Event {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  name      String
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  status    EventStatus @default(DRAFT)
+
+  /// Uang Terkumpul — satu angka untuk seluruh Acara. Tidak dilacak per Peserta.
+  fundsRaised Decimal? @map("funds_raised") @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities   Activity[]
+  participants Participant[]
+
+  @@index([userId, status])
+  @@index([userId, startDate])
+  @@map("events")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kegiatan
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Satu bagian di dalam Acara — sekaligus satu baris urutan (itinerary)
+/// dan satu keranjang tempat Pengeluaran dikelompokkan.
+model Activity {
+  id      String @id @default(uuid()) @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+
+  name     String
+  /// Urutan tampil di dalam Acara.
+  sortOrder Int     @default(0) @map("sort_order")
+  date     DateTime @db.Date
+  /// Jam dalam format "HH:mm", mis. "08:00". Nullable bila belum ditentukan.
+  time     String?
+  location String?
+  notes    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  budgetItems BudgetItem[]
+  expenses    Expense[]
+
+  @@index([eventId, sortOrder])
+  @@map("activities")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Item Anggaran
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Satu baris rencana biaya di dalam sebuah Kegiatan. Realisasinya adalah
+/// jumlah dari seluruh Pengeluaran yang tertaut ke item ini.
+model BudgetItem {
+  id         String  @id @default(uuid()) @db.Uuid
+  activityId String  @map("activity_id") @db.Uuid
+  categoryId String? @map("category_id") @db.Uuid
+
+  name   String
+  amount Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  activity Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  expenses Expense[]
+
+  @@index([activityId])
+  @@map("budget_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pengeluaran
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Satu arus uang keluar yang nyata, milik tepat satu Kegiatan.
+model Expense {
+  id           String  @id @default(uuid()) @db.Uuid
+  activityId   String  @map("activity_id") @db.Uuid
+  /// Opsional: Pengeluaran boleh belum tertaut ke rencana biayanya.
+  budgetItemId String? @map("budget_item_id") @db.Uuid
+  categoryId   String? @map("category_id") @db.Uuid
+  /// Pembayar — Peserta yang menalangi lebih dulu.
+  payerId      String? @map("payer_id") @db.Uuid
+
+  amount      Decimal       @db.Decimal(14, 2)
+  description String
+  date        DateTime      @db.Date
+  paymentMethod PaymentMethod @map("payment_method")
+
+  /// Path objek di Supabase Storage (bukan URL publik) — foto struk, opsional.
+  receiptPath String? @map("receipt_path")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  activity   Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  budgetItem BudgetItem?    @relation(fields: [budgetItemId], references: [id], onDelete: SetNull)
+  category   Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  payer      Participant?   @relation("ExpensePayer", fields: [payerId], references: [id], onDelete: SetNull)
+  shares     ExpenseShare[]
+
+  @@index([activityId])
+  @@index([budgetItemId])
+  @@index([payerId])
+  @@map("expenses")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peserta
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Orang yang ikut sebuah Acara — dicatat sebagai nama saja, tanpa akun.
+model Participant {
+  id      String @id @default(uuid()) @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+
+  name String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  expensesPaid   Expense[]      @relation("ExpensePayer")
+  shares         ExpenseShare[]
+
+  @@unique([eventId, name])
+  @@index([eventId])
+  @@map("participants")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bagian
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Porsi satu Pengeluaran yang ditanggung seorang Peserta. Bawaan dibagi rata,
+/// dapat disesuaikan. Jumlah seluruh Bagian sebuah Pengeluaran harus sama
+/// dengan nominal Pengeluaran itu (dijaga di lapisan service).
+model ExpenseShare {
+  id            String @id @default(uuid()) @db.Uuid
+  expenseId     String @map("expense_id") @db.Uuid
+  participantId String @map("participant_id") @db.Uuid
+
+  amount Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, participantId])
+  @@index([expenseId])
+  @@map("expense_shares")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kategori
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Pengelompokan Pengeluaran. `userId = null` berarti Kategori bawaan
+/// (read-only, tersedia untuk semua Pengguna).
+model Category {
+  id     String  @id @default(uuid()) @db.Uuid
+  userId String? @map("user_id") @db.Uuid
+
+  name      String
+  isDefault Boolean @default(false) @map("is_default")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgetItems BudgetItem[]
+  expenses    Expense[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("categories")
+}
