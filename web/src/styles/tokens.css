@@ -1,0 +1,129 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Token desain TheOnePlanner.
+   Warna diambil dari logo (public/top.jpeg): plum #4E154A, magenta #EA1CD9,
+   koral #FD674E. Teks di atas plum memakai putih (rasio 13,7:1).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Merek */
+  --color-primary: #4e154a;
+  --color-primary-hover: #6b1d65;
+  --color-primary-tint: #fbf1fa;
+  /* Magenta logo hanya lolos kontras untuk teks besar/ikon (3,7:1 di atas
+     putih). Jangan dipakai sebagai warna teks biasa. */
+  --color-accent: #ea1cd9;
+  --color-accent-coral: #fd674e;
+  /* Teks/ikon di atas --color-primary. */
+  --color-on-primary: #ffffff;
+
+  /* Permukaan */
+  --color-surface: #ffffff;
+  --color-page: #f8fafc;
+  --color-border: #e2e8f0;
+
+  /* Teks */
+  --color-text: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  /* Semantik — JANGAN dipakai sebagai warna aksen, hanya untuk status.
+     Selalu pasangkan dengan ikon atau label, jangan andalkan warna saja. */
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* Latar semantik (versi pucat untuk chip dan kartu) */
+  --color-success-tint: #f0fdf4;
+  --color-warning-tint: #fffbeb;
+  --color-danger-tint: #fef2f2;
+  --color-info-tint: #eff6ff;
+
+  /* Bentuk */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /* Jarak */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Bayangan — sangat halus, sesuai nada visual Stitch */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* Tipografi */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --text-title: 22px;
+  --text-section: 16px;
+  --text-body: 15px;
+  --text-caption: 13px;
+
+  /* Tinggi minimum target sentuh (aksesibilitas) */
+  --touch-target: 44px;
+
+  /* Tinggi bilah bawah, dipakai untuk padding konten */
+  --bottom-nav-height: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-primary: #f0a8e8;
+    --color-primary-hover: #f7c8f2;
+    --color-primary-tint: #3b0f38;
+    /* Di tema gelap magenta logo terlalu menyala untuk latar putih;
+       dipakai versi yang lebih pekat supaya tombol tetap terbaca. */
+    --color-accent: #a21a97;
+    --color-on-primary: #3b0f38;
+
+    --color-surface: #1e293b;
+    --color-page: #0f172a;
+    --color-border: #334155;
+
+    --color-text: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+
+    --color-success-tint: #052e16;
+    --color-warning-tint: #451a03;
+    --color-danger-tint: #450a0a;
+    --color-info-tint: #172554;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #f0a8e8;
+  --color-primary-hover: #f7c8f2;
+  --color-primary-tint: #3b0f38;
+  --color-accent: #a21a97;
+  --color-on-primary: #3b0f38;
+
+  --color-surface: #1e293b;
+  --color-page: #0f172a;
+  --color-border: #334155;
+
+  --color-text: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+
+  --color-success-tint: #052e16;
+  --color-warning-tint: #451a03;
+  --color-danger-tint: #450a0a;
+  --color-info-tint: #172554;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

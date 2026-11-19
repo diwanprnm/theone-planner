@@ -1,0 +1,16 @@
+{
+  "name": "event-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Event Ledger — monorepo: api/ (NestJS + Prisma) dan web/ (Vite + React PWA)",
+  "license": "UNLICENSED",
+  "scripts": {
+    "install:all": "npm --prefix api install && npm --prefix web install",
+    "dev:api": "npm --prefix api run start:dev",
+    "dev:web": "npm --prefix web run dev",
+    "build:api": "npm --prefix api run build",
+    "build:web": "npm --prefix web run build",
+    "test:api": "npm --prefix api test",
+    "typecheck:web": "npm --prefix web run typecheck"
+  }
+}
