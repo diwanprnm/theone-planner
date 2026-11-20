@@ -467,6 +467,10 @@ textarea {
 .list__body {
   flex: 1;
   min-width: 0;
+  /* Span anak jadi blok bertumpuk-vertikal, bukan inline menyambung satu baris. */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .list__title {
