@@ -476,9 +476,13 @@ textarea {
 .list__title {
   font-size: var(--text-body);
   font-weight: 500;
+  /* Judul boleh 2 baris; lebih dari itu dipotong ellipsis. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .list__subtitle {
@@ -490,6 +494,10 @@ textarea {
 }
 
 .list__trailing {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--text-body);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
